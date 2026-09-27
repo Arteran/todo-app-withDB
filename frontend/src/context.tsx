@@ -75,7 +75,7 @@ function reducer(state: State, action: Action): State {
 
       return {
         ...state,
-        todos: [...state.todos, newTodo],
+        todos: [newTodo, ...state.todos],
       };
 
     case 'handleToggleAll':

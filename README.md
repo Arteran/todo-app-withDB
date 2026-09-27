@@ -14,6 +14,7 @@ A simple and responsive Todo application with a separated frontend and backend a
 ![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
 ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
 ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+![Sequelize](https://img.shields.io/badge/Sequelize-52B0E7?style=for-the-badge&logo=Sequelize&logoColor=white)
 
 ## Project Structure
 
@@ -26,7 +27,8 @@ A simple and responsive Todo application with a separated frontend and backend a
 1. Go to the `backend` folder: `cd backend`
 2. Install dependencies: `npm install`
 3. Copy `.env.example` to `.env` and fill in your PostgreSQL credentials.
-4. Start the server: `node src/app.js`
+4. Setup the database (creates tables): `node src/setup.js`
+5. Start the server: `node src/app.js` (or use `npm run dev` if you configured nodemon)
 
 ### Frontend Setup
 1. Go to the `frontend` folder: `cd frontend`

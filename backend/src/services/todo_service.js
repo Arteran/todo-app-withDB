@@ -1,108 +1,89 @@
 import path from 'path';
 import fs from 'fs/promises'
 import { v4 as uuidv4 } from 'uuid';
-import { client } from './db.js';
+import { sequelize } from './db.js';
+import { DataTypes, Op, QueryTypes } from 'sequelize';
 
-let todos = [
+export const Todo = sequelize.define(
+  'Todo',
   {
-    id: '1',
-    title: 'Learn Express',
-    completed: false
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    completed: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      field: 'created_at',
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
   },
   {
-    id: '2',
-    title: 'Learn React',
-    completed: true
+    tableName: 'todos',
   },
-  {
-    id: '3',
-    title: 'Learn Node.js',
-    completed: false
-  }
-];
+);
 
-export async function read () {
-  const filePath = path.resolve('data', 'todos.json');
-
-  const data = await fs.readFileS(filePath, 'utf-8')
-
-  return JSON.parse(data);
-}
-
-export async function write (todos) {
-  const filePath = path.resolve('data', 'todos.json');
-
-  await fs.writeFile(
-    filePath,
-    JSON.stringify(todos, null, 2),
-    'utf-8'
-  )
-}
+export const normalize = ({ id, title, completed }) => ({
+  id,
+  title,
+  completed,
+})
 
 export const getAll = async () => {
-  const result = await client.query(`
-    SELECT * FROM todos
-    ORDER BY created_at ASC
-  `)
+  const result = await Todo.findAll({
+    order: [['createdAt', 'DESC']],
+  });
 
-  return result.rows;
+  return result;
 }
 
 export const getById = async ( id ) => {
-  const result = await client.query(`
-    SELECT * FROM todos
-    WHERE id = $1
-  `, [id])
-
-  return result.rows[0] || null;
+  return Todo.findByPk(id);
 }
 
 export const createTodo = async ( title ) => {
-  const id = uuidv4();
-  const result = await client.query(`
-    INSERT INTO todos (id, title)
-    VALUES ($1, $2)
-  `, [id, title])
-
-  return await getById(id);
+  return Todo.create({ title });
 }
 
 export const update = async ( { id, title, completed } ) => {
-  const result = await client.query(`
-    UPDATE todos
-    SET title = $1, completed = $2
-    WHERE id = $3
-  `, [title, completed, id])
+  await Todo.update({ title, completed }, { where: { id } });
 }
 
 export const remove = async ( id ) => {
-  const result = await client.query(`
-    DELETE FROM todos
-    WHERE id = $1
-  `, [id])
-}
-
-function isUUID(id) {
-  const pattern = /^[0-9a-f\-]+$/;
-
-  return pattern.test(id); 
+  await Todo.destroy({ where: { id } });
 }
 
 export const removeMany = async ( ids ) => {
-  if (!ids.every(isUUID)) {
-    throw new Error('Invalid ID format');
-  }
+  await Todo.destroy({ where: { id: { [Op.in]: ids } } });
 
-  const indexes = ids.map((_, index) => `$${index + 1}`);
-  const result = await client.query(`
-    DELETE FROM todos
-    WHERE id in ('${ids.join(`','`)}')
-  `)
+  // sequelize.query(
+  //   `DELETE FROM todos
+  //   WHERE id in (:ids)`,
+  //   {
+  //     replacements: { ids },
+  //     type: QueryTypes.BULKDELETE,
+  //   }
+  // );
 }
 
 export const updateMany = async ( todos ) => {
-  for (const {id, title, completed} of todos) {
-    await update({id, title, completed})
-  }
-}
+  return await sequelize.transaction(async (t) => {
+    for (const { id, title, completed } of todos) {
+      await Todo.update({ title, completed }, { where: { id }, transaction: t });
+    }
+  });
 
+  // await Todo.bulkCreate(todos, {
+  //   updateOnDuplicate: ['title', 'completed'],
+  // });
+}
