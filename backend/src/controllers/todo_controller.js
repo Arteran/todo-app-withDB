@@ -1,19 +1,21 @@
 import * as todoService from '../services/todo_service.js';
 
 export const get = async (req, res) => {
-  res.send(await todoService.getAll());
+  const todos = await todoService.getAll();
+  
+  res.send(todos.map(todoService.normalize));
 };
 
 export const getOne = async (req, res) => {
   const { id } = req.params;
+
   const todo = await todoService.getById(id);
   if (!todo) {
     res.sendStatus(404);
-
     return
   }
 
-  res.send(todo);
+  res.send(todoService.normalize(todo));
 }
 
 export const create = async (req, res) => {
