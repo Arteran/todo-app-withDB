@@ -52,7 +52,7 @@ export const TodoProvider: React.FC<TodoProviderProps> = ({ children }) => {
     if (todoTitle.trim()) {
       const newTodo = await api.add(todoTitle);
 
-      setTodos(prev => [...prev, newTodo]);
+      setTodos(prev => [newTodo, ...prev]);
     }
   };
 
